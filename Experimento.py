@@ -2,18 +2,20 @@ from typing import List, Callable
 import shutil
 from pathlib import Path
 import cv2
+import csv
+
 
 class Experimento:
     def __init__(self):
         pass
 
-    def preparar_dataset(self):
+    def preparar_dataset(self) -> None:
         """
         Função que modifica a hierarquia do dataset BIPEDv2 que originalmente possui divisões em Treino e Teste para o gabarito e para imagem normal.
         A modificação feita é juntar as partição de treino e teste de imagens originais eu uma só (imagens) e para imagens já detectadas (gabarito).  
         """
 
-        def mover_arquivos(fontes: list[str], destino: Path):
+        def mover_arquivos(fontes: list[str], destino: Path) -> None:
             """
             Função para mover as imagens de uma fonte para o destino
             """
@@ -47,11 +49,66 @@ class Experimento:
         mover_arquivos(origens_imgs, pasta_final_imagens)
         mover_arquivos(origens_gabs, pasta_final_gabarito)
 
-    def aplicar_deteccao(self, img:cv2.typing.MatLike, filtro: Callable[..., cv2.typing.MatLike]):
+    def organizar_tarefa_07(self) -> None:
+        """
+        Função para separar uma amostra para a Tarefa 01 (13/04) de AVD. A amostra corresponde ao conjunto de teste do BIPEDv2 original, composto por 50 imagens
+        """
+       
+        caminho_origem = Path("BIPEDv2/BIPED/edges/imgs/test/rgbr")
+        caminho_destino = Path("BIPEDv2_Adaptado/tarefa01")
+        caminho_destino_originais = Path("BIPEDv2_Adaptado/tarefa01/originais")
+        caminho_destino_detectados = Path("BIPEDv2_Adaptado/tarefa01/detectados")
+
+        # Criar a pasta de destino (parents=True cria toda a árvore se necessário)
+        caminho_destino.mkdir(parents=True, exist_ok=True)
+        caminho_destino_originais.mkdir(parents=True, exist_ok=True)
+        caminho_destino_detectados.mkdir(parents=True, exist_ok=True)
+
+        print(f"Iniciando cópia de: {caminho_origem}")
+
+        # Verificar se a origem existe para evitar erros
+        if not caminho_origem.exists():
+            print(f"Erro: O caminho de origem '{caminho_origem}' não foi encontrado.")
+            return
+
+        # Percorrer e copiar
+        contador = 0
+        # Buscamos por extensões comuns de imagem (maiúsculas ou minúsculas)
+        extensoes = ("*.jpg", "*.jpeg", "*.png", "*.bmp")
+        
+        for extensao in extensoes:
+            for arquivo in caminho_origem.glob(extensao):
+                # shutil.copy2 mantém os metadados originais do arquivo (como data de criação)
+                shutil.copy2(arquivo, caminho_destino_originais / arquivo.name)
+                contador += 1
+
+        print(f" Concluído! {contador} imagens foram copiadas para {caminho_destino_originais}")
+
+    def salvar_resultados_tarefa_07(self, resultados: list[dict[str, any]], nome_arq: str = "resultados.csv") ->None:
+        """
+        Função que recebe uma lista dos resultados do experimento da tarefa 07 e transforma em um CSV contendo todas as informações de cada execução de algoritmo
+        """
+        # A lista de resultados deve ser assim: 
+        # resultados = [{'arquivo': 'img1.jpg', 'filtro': 'Sobel', 'tempo_ms': 15.4}, ...]
+
+        nome_arquivo = nome_arq
+
+        # Pegamos as chaves do primeiro dicionário para serem o cabeçalho
+        cabecalho = resultados[0].keys()
+        with open(nome_arquivo, 'w', newline='', encoding='utf-8') as f:
+
+            escritor = csv.DictWriter(f, fieldnames=cabecalho)
+            
+            escritor.writeheader()  # Escreve o nome das colunas
+            escritor.writerows(resultados) # Escreve todas as linhas da lista
+
+        print(f"Resultados salvos em {nome_arquivo}")
+
+    def aplicar_deteccao(self, img:cv2.typing.MatLike, filtro: Callable[..., cv2.typing.MatLike], **kwargs) -> cv2.typing.MatLike:
         """
         Recebe uma imagem e o método/operador desejado para aplicar na imagem
         """
-        return
+        return filtro(img, **kwargs) # Aplica o filtro passando os parâmetros
 
     def calcular_metricas(self, img: cv2.typing.MatLike, img_gabarito: cv2.typing.MatLike) -> List[float]:
         """
