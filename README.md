@@ -94,8 +94,8 @@ Dessa forma, seu projeto deve estar organizado dessa maneira.
  ┣ 📜requirements.txt
 ``` 
 
-* **6) Rodar o tarefa07.py**
+* **6) Rodar o mini_estudo01.py**
 
 ```bash
-python3 tarefa07.py
+python3 mini_estudo01.py
 ```
