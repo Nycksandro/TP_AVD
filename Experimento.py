@@ -8,7 +8,7 @@ import time
 import csv
 import numpy as np
 import pandas as pd
-
+from datetime import datetime
 
 class Experimento:
     def __init__(self):
@@ -144,6 +144,10 @@ class Experimento:
                         parametros = valor["params"] # Obtêm os parâmetros da função 
 
                         print(f"        - Função: {chave}")
+                        
+                        # Obtendo o horario do inicio
+                        inicio = datetime.now()
+                        data_formatada_inicio = inicio.strftime("%d/%m/%Y %H:%M:%S") # Formato padrão Brasileiro
 
                         # Coleta pré-execução
 
@@ -178,6 +182,9 @@ class Experimento:
 
                         metricas = self.calcular_metricas(resultado_borda, img_gabarito)
 
+                        fim = datetime.now()
+                        data_formatada_fim = fim.strftime("%d/%m/%Y %H:%M:%S") # Formato padrão Brasileiro
+
                         # Registrar na lista de resultados
                         lista_resultados.append({
                             "repeticao": repeticao,
@@ -189,7 +196,9 @@ class Experimento:
                             "recall": metricas[2],
                             "tempo_ms": tempo_ms,
                             "memoria_delta_mb": consumo_ram,
-                            "cpu_time_sec": tempo_cpu_gasto
+                            "cpu_time_sec": tempo_cpu_gasto,
+                            "horario_inicio": data_formatada_inicio,
+                            "horario_fim": data_formatada_fim
                         })
         self.salvar_resultados_mini_estudo(lista_resultados)
         self.gerar_grafico_mini_estudo_01("resultados.csv")
