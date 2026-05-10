@@ -97,7 +97,7 @@ class Experimento:
             print(f"\nExecução número: {repeticao}")
 
             for caminho_img in arquivos:
-                img = cv2.imread(str(caminho_img))
+                img = cv2.imread(str(caminho_img), cv2.IMREAD_GRAYSCALE)
                 print(f"    Imagem atual: {caminho_img}")
 
                 if img is None:
@@ -106,6 +106,18 @@ class Experimento:
                 for chave, valor in filtros.items():
                     funcao     = valor["func"]
                     parametros = valor["params"]
+                    
+                    if(chave == "Sobel"): # Se for Sobel, o jeito de aplicar é diferente
+                            if(parametros["dx"] == 0):
+                                parametros2 = parametros.copy()
+                                parametros2["dx"] = 1
+                                parametros2["dy"] = 0
+                            
+                            else:
+                                parametros2 = parametros.copy()
+                                parametros2["dy"] = 1
+                                parametros2["dx"] = 0
+
                     print(f"        - Função: {chave}")
 
                     # ── Horário de início ─────────────────────────────────────
@@ -117,7 +129,15 @@ class Experimento:
                     tempo_cpu_inicio  = time.process_time()   # tempo de CPU
 
                     # ── Detecção ──────────────────────────────────────────────
-                    resultado_borda = self.aplicar_deteccao(img, funcao, **parametros)
+                    if(funcao == "chave"): # Se for Sobel tem que executar desse jeito
+                        resultado_x = self.aplicar_deteccao(img, funcao, **parametros)  # Horizontal edges
+                        resultado_y = self.aplicar_deteccao(img, funcao, **parametros2)  # Vertical edges
+                        
+                        # Compute gradient magnitude
+                        mag_grad = cv2.magnitude(resultado_x, resultado_y)
+                        resultado_borda = cv2.convertScaleAbs(mag_grad)
+                    else:
+                        resultado_borda = self.aplicar_deteccao(img, funcao, **parametros)
 
                     # ── Coleta pós-execução ───────────────────────────────────
                     tempo_wall_fim = time.perf_counter()
@@ -137,7 +157,7 @@ class Experimento:
                     )
 
                     cv2.imwrite(caminho_dest_detectada, resultado_borda)
-                    img_gabarito = cv2.imread(caminho_gabarito)
+                    img_gabarito = cv2.imread(caminho_gabarito, cv2.IMREAD_GRAYSCALE)
 
                     metricas = self.calcular_metricas(resultado_borda, img_gabarito)
 

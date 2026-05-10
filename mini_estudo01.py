@@ -12,14 +12,18 @@ def sobel_completo(img, ksize=3):
     return cv2.convertScaleAbs(magnitude)
 
 filtros = {
-    "Sobel": {
-        "func": sobel_completo,   # função auxiliar abaixo
-        "params": {"ksize": 3}
-    },
-    "Laplacian": {
-        "func": cv2.Laplacian,
-        "params": {"ddepth": cv2.CV_8U, "ksize": 3}
-    }
+            "Canny":{
+            "func": cv2.Canny,
+            "params": {'threshold1': 110, 'threshold2': 190, 'apertureSize': 3, "L2gradient": True}
+            },
+            "Laplacian": {
+            "func": cv2.Laplacian, 
+            "params": {"ddepth": cv2.CV_8U, "ksize": 3, "scale": 2}
+            },
+            "Sobel": { # Referência das funções e os seus parâmetros
+            "func": cv2.Sobel, 
+            "params": {"ddepth": cv2.CV_64F, "dx": 1, "dy": 0, "ksize": 3, "scale": 1, "borderType": cv2.BORDER_DEFAULT}
+            }
 }
 
 exp.mini_estudo01(filtros, 3)
