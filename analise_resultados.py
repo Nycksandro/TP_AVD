@@ -207,7 +207,42 @@ for ax, metrica in zip(axes, metricas):
 
 plt.tight_layout()
 plt.savefig("comparacao_filtros.png", dpi=150, bbox_inches="tight")
-print("\n✅ Gráfico salvo: comparacao_filtros.png")
+print("\nGráfico salvo: comparacao_filtros.png")
 plt.close()
 
-print("\n✅ Análise concluída.")
+
+
+def calcular_intervalo_confianca(dados, confianca=0.95):
+    n = len(dados)
+    if n < 2: return np.mean(dados), 0.0
+    media = np.mean(dados)
+    erro_padrao = stats.sem(dados)
+    # t-Student para 95% de confiança
+    h = erro_padrao * stats.t.ppf((1 + confianca) / 2., n - 1)
+    return media, h
+
+# 1. Carregar os dados
+try:
+    df = pd.read_csv('resultados.csv')
+except FileNotFoundError:
+    print("Erro: O arquivo 'resultados.csv' não foi encontrado.")
+    exit()
+
+# 2. Lista de métricas incluindo o CPU Time
+metricas = ['f1score', 'precision', 'recall', 'tempo_ms', 'cpu_time_ms']
+
+# 3. Configuração da precisão e cabeçalho
+p = 8  # Número de casas decimais
+print(f"{'Filtro':<12} | {'Métrica':<12} | {'Média':<{p+6}} | {'Mediana':<{p+6}} | {'IC (95%)':<12}")
+print("-" * 100)
+
+# 4. Agrupamento e Cálculo
+for filtro, grupo in df.groupby('filtro'):
+    for metrica in metricas:
+        if metrica in grupo.columns:
+            media, margem_erro = calcular_intervalo_confianca(grupo[metrica])
+            mediana = grupo[metrica].median()
+            
+            # Exibição com alinhamento dinâmico baseado na precisão 'p'
+            print(f"{filtro:<12} | {metrica:<12} | {media:<14.{p}f} | {mediana:<14.{p}f} | ± {margem_erro:.{p}f}")
+    print("-" * 100)
